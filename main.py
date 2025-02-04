@@ -4,6 +4,9 @@ import numpy as np
 import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, r2_score
 
 # Generar datos dummies
 np.random.seed(42)
@@ -124,4 +127,119 @@ st.pyplot(fig_heatmap)
 # Resumen de tiempos de resolución
 st.subheader("Resumen de Tiempos de Resolución")
 st.dataframe(df[['Estado', 'Tiempo_Resolucion']].groupby('Estado').describe())
+
+# Preparar datos para el modelo de Machine Learning
+df_ml = df[['Estado', 'Prioridad', 'Usuario', 'Tiempo_Resolucion']].dropna()
+df_ml['Estado'] = df_ml['Estado'].map({'Abierto': 0, 'En proceso': 1, 'Cerrado': 2})
+df_ml['Prioridad'] = df_ml['Prioridad'].map({'Alta': 0, 'Media': 1, 'Baja': 2})
+
+X = df_ml[['Estado', 'Prioridad', 'Usuario']]
+y = df_ml['Tiempo_Resolucion']
+
+# Dividir los datos en entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Crear el modelo
+model = LinearRegression()
+
+# Entrenar el modelo
+model.fit(X_train, y_train)
+
+# Realizar predicciones
+y_pred = model.predict(X_test)
+
+# Evaluar el modelo
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+# Mostrar métricas
+st.subheader("Evaluación del Modelo de Machine Learning")
+st.write(f"Error Absoluto Medio (MAE): {mae:.2f}")
+st.write(f"Coeficiente de Determinación (R²): {r2:.2f}")
+
+# Predicción de tiempos de resolución para un nuevo conjunto de datos
+nuevo_dato = pd.DataFrame({'Estado': [1], 'Prioridad': [0], 'Usuario': [10]})
+prediccion = model.predict(nuevo_dato)
+
+st.write(f"Predicción de Tiempo de Resolución para el incidente con Estado 'En proceso', Prioridad 'Alta' y Usuario 10: {prediccion[0]:.2f} horas")
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Convertir columnas categóricas a variables numéricas
+df = pd.get_dummies(df, columns=['Prioridad', 'Usuario'], drop_first=True)
+
+# Definir variables de entrada (X) y salida (y)
+X = df[['Prioridad_Media', 'Prioridad_Alta', 'Usuario']]
+y = df['Estado']
+
+# Dividir en conjuntos de entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Entrenar el modelo
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Realizar predicciones
+y_pred = model.predict(X_test)
+
+# Evaluar el modelo
+accuracy = accuracy_score(y_test, y_pred)
+st.write(f"Precisión del modelo: {accuracy:.2f}")
+
+
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Agrupar por Usuario y calcular el número de incidentes y tiempo promedio de resolución
+user_data = df.groupby('Usuario').agg({
+    'Estado': 'count',
+    'Tiempo_Resolucion': 'mean'
+}).reset_index()
+
+# Normalizar los datos
+scaler = StandardScaler()
+user_data_scaled = scaler.fit_transform(user_data[['Estado', 'Tiempo_Resolucion']])
+
+# Aplicar K-means
+kmeans = KMeans(n_clusters=3, random_state=42)
+user_data['Cluster'] = kmeans.fit_predict(user_data_scaled)
+
+st.write("Segmentación de Usuarios por Cluster")
+st.dataframe(user_data.head())
+
+
+from fbprophet import Prophet
+
+# Preparar los datos para Prophet
+df_prophet = df.groupby(df['Fecha'].dt.date).size().reset_index(name='Incidentes')
+df_prophet.columns = ['ds', 'y']
+
+# Ajustar el modelo Prophet
+model = Prophet()
+model.fit(df_prophet)
+
+# Realizar predicciones
+future = model.make_future_dataframe(df_prophet, periods=30)
+forecast = model.predict(future)
+
+# Visualizar las predicciones
+st.write(f"Predicciones de Incidentes para los próximos 30 días")
+fig = model.plot(forecast)
+st.pyplot(fig)
+
+from sklearn.ensemble import IsolationForest
+
+# Usar solo la columna de tiempo de resolución para la detección de anomalías
+model = IsolationForest(contamination=0.01)  # Ajustar el nivel de contaminación
+df['Anomalia'] = model.fit_predict(df[['Tiempo_Resolucion']])
+
+# Mostrar incidentes anómalos
+anomalous_data = df[df['Anomalia'] == -1]
+st.write("Incidentes Anómalos Detectados:")
+st.dataframe(anomalous_data)
+
+
 
