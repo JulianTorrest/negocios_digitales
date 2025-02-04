@@ -102,9 +102,8 @@ st.plotly_chart(fig_tiempo_prioridad)
 promedio_resolucion_por_prioridad = df.groupby([df['Fecha'].dt.date, 'Prioridad'])['Tiempo_Resolucion'].mean().unstack().reset_index()
 
 # Asegurarte de que el DataFrame tiene las columnas correctas
-fig_tiempo_prioridad = px.bar(promedio_resolucion_por_prioridad, 
-                              x='Fecha', 
-                              y=promedio_resolucion_por_prioridad.columns[1:], 
+fig_tiempo_prioridad = px.bar(promedio_resolucion_por_prioridad, x=promedio_resolucion_por_prioridad.index, 
+                              y=promedio_resolucion_por_prioridad.columns, 
                               title="Tiempo Promedio de Resolución por Prioridad")
 
 # Mostrar el gráfico
