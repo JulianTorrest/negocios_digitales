@@ -209,6 +209,10 @@ param_grid = {
     'min_samples_leaf': [1, 2, 4]
 }
 
+
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import GridSearchCV
+
 # Realizar una búsqueda en cuadrícula
 grid_search = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5, scoring='accuracy')
 grid_search.fit(X_train_class, y_train_class)
