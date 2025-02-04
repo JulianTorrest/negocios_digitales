@@ -87,22 +87,6 @@ df_estado = df.groupby([df['Fecha'].dt.date, 'Estado']).size().unstack().fillna(
 st.subheader("Evolución de reportes por estado")
 st.line_chart(df_estado)
 
-# Distribución por prioridad
-# Asegúrate de que 'promedio_resolucion_por_prioridad' sea un DataFrame
-promedio_resolucion_por_prioridad = df.groupby([df['Fecha'].dt.date, 'Prioridad'])['Tiempo_Resolucion'].mean().unstack().reset_index()
-if isinstance(promedio_resolucion_por_prioridad, pd.Series):
-    promedio_resolucion_por_prioridad = promedio_resolucion_por_prioridad.reset_index()
-    promedio_resolucion_por_prioridad.columns = ['Prioridad', 'Tiempo Promedio de Resolución']
-
-# Crear el gráfico de barras
-fig_tiempo_prioridad = px.bar(promedio_resolucion_por_prioridad, 
-                              x='Prioridad', 
-                              y='Tiempo Promedio de Resolución',
-                              title="Tiempo Promedio de Resolución por Prioridad")
-
-fig_tiempo_prioridad.show()
-
-
 # Distribución de incidentes por hora del día
 st.subheader("Distribución de Incidentes por Hora del Día")
 fig_hora = px.bar(x=incidentes_por_hora.index, y=incidentes_por_hora.values, title="Incidentes Reportados por Hora")
