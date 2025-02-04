@@ -2,76 +2,108 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Generar datos dummies
 np.random.seed(42)
 dates = pd.date_range(start="2023-01-01", periods=100000, freq='H')
 status = np.random.choice(['Abierto', 'En proceso', 'Cerrado'], size=100000, p=[0.2, 0.3, 0.5])
 times_to_resolve = np.random.exponential(scale=48, size=100000)  # Horas para resolver
+priorities = np.random.choice(['Alta', 'Media', 'Baja'], size=100000, p=[0.3, 0.5, 0.2])
+users = np.random.randint(1, 500, size=100000)
 
 # Crear DataFrame
 df = pd.DataFrame({
     'Fecha': dates,
     'Estado': status,
-    'Tiempo_Resolucion': times_to_resolve
+    'Tiempo_Resolucion': times_to_resolve,
+    'Prioridad': priorities,
+    'Usuario': users
 })
+
+# Cálculo de KPIs
+num_incidentes = len(df)
+tiempo_prom_resolucion = df['Tiempo_Resolucion'].mean()
+estado_counts = df['Estado'].value_counts()
+incidentes_por_prioridad = df['Prioridad'].value_counts()
+promedio_resolucion_por_prioridad = df.groupby('Prioridad')['Tiempo_Resolucion'].mean()
+incidentes_por_usuario = df.groupby('Usuario').size()
+max_incidentes_usuario = incidentes_por_usuario.max()
+usuario_mas_incidentes = incidentes_por_usuario.idxmax()
+min_incidentes_usuario = incidentes_por_usuario.min()
+usuario_menos_incidentes = incidentes_por_usuario.idxmin()
+
+# KPIs adicionales
+incidentes_por_hora = df.groupby(df['Fecha'].dt.hour).size()
+tendencia_semanal = df.groupby(df['Fecha'].dt.dayofweek).size()
+tiempo_resolucion_por_dia = df.groupby(df['Fecha'].dt.dayofweek)['Tiempo_Resolucion'].mean()
+incidentes_por_estado_y_prioridad = df.groupby(['Estado', 'Prioridad']).size().unstack().fillna(0)
+porcentaje_resolucion_sla = (df[df['Tiempo_Resolucion'] <= 48].shape[0] / num_incidentes) * 100
+reapertura_tasa = df[df['Estado'] == 'Abierto'].shape[0] / num_incidentes * 100
 
 # Interfaz Streamlit
 st.title("Análisis de Soporte a Productos Financieros")
 
-# Sección de diagnóstico inicial
-st.header("1. Diagnóstico Inicial")
-st.markdown("**Pasos iniciales para diagnóstico:**")
-st.write("1. Verificar credenciales y permisos del usuario.")
-st.write("2. Confirmar si la plataforma está operativa o hay fallos generales.")
-st.write("3. Consultar logs de acceso y errores.")
-st.write("4. Contactar al área técnica en caso de problemas con la infraestructura.")
+st.subheader("Indicadores Clave de Rendimiento (KPIs)")
+st.metric(label="Número Total de Incidentes", value=num_incidentes)
+st.metric(label="Tiempo Promedio de Resolución (horas)", value=round(tiempo_prom_resolucion, 2))
+st.metric(label="Máximo de Incidentes por Usuario", value=max_incidentes_usuario)
+st.metric(label="Usuario con Más Incidentes", value=usuario_mas_incidentes)
+st.metric(label="Mínimo de Incidentes por Usuario", value=min_incidentes_usuario)
+st.metric(label="Usuario con Menos Incidentes", value=usuario_menos_incidentes)
+st.metric(label="Porcentaje de Resolución dentro de SLA", value=round(porcentaje_resolucion_sla, 2))
+st.metric(label="Tasa de Reapertura de Incidentes", value=round(reapertura_tasa, 2))
 
-st.markdown("**Preguntas clave para el cliente:**")
-st.write("- ¿Cuál es el mensaje de error exacto?")
-st.write("- ¿Desde cuándo ocurre el problema?")
-st.write("- ¿Ha probado con otro navegador o dispositivo?")
-st.write("- ¿Puede acceder a otros servicios de la Fiduciaria?")
+# Gráfico de distribución de estados
+total_estado_fig = px.pie(values=estado_counts.values, names=estado_counts.index, title="Distribución de Estados de Incidentes")
+st.plotly_chart(total_estado_fig)
 
-# Sección de manejo del cliente
-st.header("2. Gestionar Expectativas del Cliente")
-st.markdown("**Respuesta para manejar la frustración:**")
-st.write("Estimado cliente, entendemos su preocupación y estamos priorizando su caso. Vamos a diagnosticar la causa lo antes posible.")
-
-st.markdown("**Construcción de confianza:**")
-st.write("Le mantendremos informado sobre los avances cada 30 minutos hasta la solución del problema.")
-
-# Sección de resolución del problema
-st.header("3. Resolución del Problema y Trabajo en Equipo")
-st.markdown("**Acciones en caso de permisos incorrectos:**")
-st.write("- Revisar la configuración de roles y accesos.")
-st.write("- Validar logs para detectar cambios recientes.")
-st.write("- Coordinar con el equipo de soporte técnico para ajustes inmediatos.")
-
-st.markdown("**Prevención de futuros incidentes:**")
-st.write("- Implementar alertas tempranas para fallos de acceso.")
-st.write("- Automatizar revisiones de permisos.")
-st.write("- Ofrecer entrenamiento a los clientes sobre el uso de la plataforma.")
-
-# Sección de reporte de tiempos de respuesta
-st.header("4. Reporte y Análisis de Datos")
-st.markdown("**Indicadores clave:**")
-st.write("- Promedio de tiempo de resolución.")
-st.write("- Distribución de estados de PQRS.")
-st.write("- Tendencias en la cantidad de reportes a lo largo del tiempo.")
-
-# Visualización de datos
+# Histograma de tiempos de resolución
 st.subheader("Distribución de tiempos de resolución")
 fig = px.histogram(df, x="Tiempo_Resolucion", nbins=50, title="Histograma de Tiempos de Resolución")
 st.plotly_chart(fig)
 
-st.subheader("Evolución de reportes por estado")
+# Evolución de reportes por estado
 df['Fecha'] = pd.to_datetime(df['Fecha'])
 df_estado = df.groupby([df['Fecha'].dt.date, 'Estado']).size().unstack().fillna(0)
+st.subheader("Evolución de reportes por estado")
 st.line_chart(df_estado)
 
-st.subheader("Resumen de Tiempos de Resolución")
-st.write(df[['Estado', 'Tiempo_Resolucion']].groupby('Estado').describe())
+# Distribución por prioridad
+st.subheader("Distribución de Incidentes por Prioridad")
+fig_prioridad = px.bar(x=incidentes_por_prioridad.index, y=incidentes_por_prioridad.values, title="Incidentes por Prioridad")
+st.plotly_chart(fig_prioridad)
 
-st.write("### Conclusión:")
-st.write("Estos análisis permiten optimizar los tiempos de respuesta y mejorar la experiencia del cliente.")
+# Promedio de resolución por prioridad
+st.subheader("Tiempo Promedio de Resolución por Prioridad")
+fig_tiempo_prioridad = px.bar(x=promedio_resolucion_por_prioridad.index, y=promedio_resolucion_por_prioridad.values, title="Tiempo Promedio de Resolución por Prioridad")
+st.plotly_chart(fig_tiempo_prioridad)
+
+# Distribución de incidentes por hora del día
+st.subheader("Distribución de Incidentes por Hora del Día")
+fig_hora = px.bar(x=incidentes_por_hora.index, y=incidentes_por_hora.values, title="Incidentes Reportados por Hora")
+st.plotly_chart(fig_hora)
+
+# Tendencia semanal de incidentes
+st.subheader("Tendencia Semanal de Incidentes")
+fig_semanal = px.line(x=tendencia_semanal.index, y=tendencia_semanal.values, title="Incidentes por Día de la Semana")
+st.plotly_chart(fig_semanal)
+
+# Tiempo de resolución promedio por día de la semana
+st.subheader("Tiempo Promedio de Resolución por Día de la Semana")
+fig_res_dia = px.bar(x=tiempo_resolucion_por_dia.index, y=tiempo_resolucion_por_dia.values, title="Tiempo Promedio de Resolución por Día")
+st.plotly_chart(fig_res_dia)
+
+# Mapa de calor de incidentes
+st.subheader("Mapa de Calor de Reportes por Día y Hora")
+df['Hora'] = df['Fecha'].dt.hour
+df['Dia'] = df['Fecha'].dt.dayofweek
+heatmap_data = df.pivot_table(index='Dia', columns='Hora', values='Tiempo_Resolucion', aggfunc='count').fillna(0)
+fig_heatmap, ax = plt.subplots(figsize=(12, 6))
+sns.heatmap(heatmap_data, cmap="YlGnBu", ax=ax)
+st.pyplot(fig_heatmap)
+
+# Resumen de tiempos de resolución
+st.subheader("Resumen de Tiempos de Resolución")
+st.dataframe(df[['Estado', 'Tiempo_Resolucion']].groupby('Estado').describe())
