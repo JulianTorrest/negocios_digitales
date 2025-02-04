@@ -107,3 +107,4 @@ st.pyplot(fig_heatmap)
 # Resumen de tiempos de resolución
 st.subheader("Resumen de Tiempos de Resolución")
 st.dataframe(df[['Estado', 'Tiempo_Resolucion']].groupby('Estado').describe())
+
