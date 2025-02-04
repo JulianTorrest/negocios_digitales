@@ -88,9 +88,14 @@ st.subheader("Evolución de reportes por estado")
 st.line_chart(df_estado)
 
 # Distribución por prioridad
-st.subheader("Distribución de Incidentes por Prioridad")
-fig_prioridad = px.bar(x=incidentes_por_prioridad.index, y=incidentes_por_prioridad.values, title="Incidentes por Prioridad")
-st.plotly_chart(fig_prioridad)
+# Asegúrate de que 'promedio_resolucion_por_prioridad' sea un DataFrame
+promedio_resolucion_por_prioridad = df.groupby([df['Fecha'].dt.date, 'Prioridad'])['Tiempo_Resolucion'].mean().unstack().reset_index()
+
+# Ajusta los nombres de las columnas y organiza los datos
+fig_tiempo_prioridad = px.bar(promedio_resolucion_por_prioridad, x='Fecha', y=promedio_resolucion_por_prioridad.columns[1:], 
+                              title="Tiempo Promedio de Resolución por Prioridad")
+
+st.plotly_chart(fig_tiempo_prioridad)
 
 # Promedio de resolución por prioridad
 st.subheader("Tiempo Promedio de Resolución por Prioridad")
