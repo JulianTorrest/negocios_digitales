@@ -41,7 +41,7 @@ num_incidentes = len(df)
 tiempo_prom_resolucion = df['Tiempo_Resolucion'].mean()
 estado_counts = df['Estado'].value_counts()
 incidentes_por_prioridad = df['Prioridad'].value_counts()
-promedio_resolucion_por_prioridad = df.groupby([df['Fecha'].dt.date, 'Prioridad'])['Tiempo_Resolucion'].mean().unstack()
+promedio_resolucion_por_prioridad = df.groupby('Prioridad')['Tiempo_Resolucion'].mean()
 incidentes_por_usuario = df.groupby('Usuario').size()
 max_incidentes_usuario = incidentes_por_usuario.max()
 usuario_mas_incidentes = incidentes_por_usuario.idxmax()
@@ -86,6 +86,16 @@ df['Fecha'] = pd.to_datetime(df['Fecha'])
 df_estado = df.groupby([df['Fecha'].dt.date, 'Estado']).size().unstack().fillna(0)
 st.subheader("Evolución de reportes por estado")
 st.line_chart(df_estado)
+
+# Distribución por prioridad
+st.subheader("Distribución de Incidentes por Prioridad")
+fig_prioridad = px.bar(x=incidentes_por_prioridad.index, y=incidentes_por_prioridad.values, title="Incidentes por Prioridad")
+st.plotly_chart(fig_prioridad)
+
+# Promedio de resolución por prioridad
+st.subheader("Tiempo Promedio de Resolución por Prioridad")
+fig_tiempo_prioridad = px.bar(x=promedio_resolucion_por_prioridad.index, y=promedio_resolucion_por_prioridad.values, title="Tiempo Promedio de Resolución por Prioridad")
+st.plotly_chart(fig_tiempo_prioridad)
 
 # Distribución de incidentes por hora del día
 st.subheader("Distribución de Incidentes por Hora del Día")
