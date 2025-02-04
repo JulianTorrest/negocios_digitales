@@ -98,9 +98,18 @@ fig_tiempo_prioridad = px.bar(promedio_resolucion_por_prioridad, x='Fecha', y=pr
 st.plotly_chart(fig_tiempo_prioridad)
 
 # Promedio de resolución por prioridad
-st.subheader("Tiempo Promedio de Resolución por Prioridad")
-fig_tiempo_prioridad = px.bar(x=promedio_resolucion_por_prioridad.index, y=promedio_resolucion_por_prioridad.values, title="Tiempo Promedio de Resolución por Prioridad")
+# Convertir promedio_resolucion_por_prioridad a DataFrame
+promedio_resolucion_por_prioridad = df.groupby([df['Fecha'].dt.date, 'Prioridad'])['Tiempo_Resolucion'].mean().unstack().reset_index()
+
+# Asegurarte de que el DataFrame tiene las columnas correctas
+fig_tiempo_prioridad = px.bar(promedio_resolucion_por_prioridad, 
+                              x='Fecha', 
+                              y=promedio_resolucion_por_prioridad.columns[1:], 
+                              title="Tiempo Promedio de Resolución por Prioridad")
+
+# Mostrar el gráfico
 st.plotly_chart(fig_tiempo_prioridad)
+
 
 # Distribución de incidentes por hora del día
 st.subheader("Distribución de Incidentes por Hora del Día")
