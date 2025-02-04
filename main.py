@@ -213,37 +213,7 @@ user_data['Cluster'] = kmeans.fit_predict(user_data_scaled)
 st.write("Segmentación de Usuarios por Cluster")
 st.dataframe(user_data.head())
 
-# Análisis de Tendencias y Estacionalidad
-from fbprophet import Prophet
 
-# Preparar los datos para Prophet
-df_prophet = df.groupby(df['Fecha'].dt.date).size().reset_index(name='Incidentes')
-df_prophet.columns = ['ds', 'y']
-
-# Ajustar el modelo Prophet
-model = Prophet()
-model.fit(df_prophet)
-
-# Realizar predicciones
-future = model.make_future_dataframe(df_prophet, periods=30)
-forecast = model.predict(future)
-
-# Visualizar las predicciones
-st.write(f"Predicciones de Incidentes para los próximos 30 días")
-fig = model.plot(forecast)
-st.pyplot(fig)
-
-# Detección de Anomalías (Anomalías en la resolución de incidentes)
-from sklearn.ensemble import IsolationForest
-
-# Usar solo la columna de tiempo de resolución para la detección de anomalías
-model = IsolationForest(contamination=0.01)  # Ajustar el nivel de contaminación
-df['Anomalia'] = model.fit_predict(df[['Tiempo_Resolucion']])
-
-# Mostrar incidentes anómalos
-anomalous_data = df[df['Anomalia'] == -1]
-st.write("Incidentes Anómalos Detectados:")
-st.dataframe(anomalous_data)
 
 
 
