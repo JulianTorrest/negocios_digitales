@@ -1,4 +1,4 @@
-import streamlit as st
+Gimport streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -22,6 +22,20 @@ df = pd.DataFrame({
     'Usuario': users
 })
 
+# Filtrar usuarios específicos
+df = df[~df['Usuario'].isin([400, 401])]
+
+# Ajustar tiempos de resolución por prioridad
+def ajustar_tiempo_prioridad(row):
+    if row['Prioridad'] == 'Alta':
+        return np.random.uniform(30, 60)  # Entre 30 y 60 minutos
+    elif row['Prioridad'] == 'Media':
+        return np.random.uniform(120, 180)  # Entre 2 y 3 horas
+    else:
+        return np.random.uniform(180, 360)  # Más de 3 horas
+
+df['Tiempo_Resolucion'] = df.apply(ajustar_tiempo_prioridad, axis=1)
+
 # Cálculo de KPIs
 num_incidentes = len(df)
 tiempo_prom_resolucion = df['Tiempo_Resolucion'].mean()
@@ -36,8 +50,11 @@ usuario_menos_incidentes = incidentes_por_usuario.idxmin()
 
 # KPIs adicionales
 incidentes_por_hora = df.groupby(df['Fecha'].dt.hour).size()
+dias_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 tendencia_semanal = df.groupby(df['Fecha'].dt.dayofweek).size()
-tiempo_resolucion_por_dia = df.groupby(df['Fecha'].dt.dayofweek)['Tiempo_Resolucion'].mean()
+tendencia_semanal.index = dias_semana
+tiempos_resolucion_por_dia = df.groupby(df['Fecha'].dt.dayofweek)['Tiempo_Resolucion'].mean()
+tiempos_resolucion_por_dia.index = dias_semana
 incidentes_por_estado_y_prioridad = df.groupby(['Estado', 'Prioridad']).size().unstack().fillna(0)
 porcentaje_resolucion_sla = (df[df['Tiempo_Resolucion'] <= 48].shape[0] / num_incidentes) * 100
 reapertura_tasa = df[df['Estado'] == 'Abierto'].shape[0] / num_incidentes * 100
@@ -87,12 +104,12 @@ st.plotly_chart(fig_hora)
 
 # Tendencia semanal de incidentes
 st.subheader("Tendencia Semanal de Incidentes")
-fig_semanal = px.line(x=tendencia_semanal.index, y=tendencia_semanal.values, title="Incidentes por Día de la Semana")
+fig_semanal = px.line(x=dias_semana, y=tendencia_semanal.values, title="Incidentes por Día de la Semana")
 st.plotly_chart(fig_semanal)
 
 # Tiempo de resolución promedio por día de la semana
 st.subheader("Tiempo Promedio de Resolución por Día de la Semana")
-fig_res_dia = px.bar(x=tiempo_resolucion_por_dia.index, y=tiempo_resolucion_por_dia.values, title="Tiempo Promedio de Resolución por Día")
+fig_res_dia = px.bar(x=dias_semana, y=tiempos_resolucion_por_dia.values, title="Tiempo Promedio de Resolución por Día")
 st.plotly_chart(fig_res_dia)
 
 # Mapa de calor de incidentes
@@ -107,4 +124,3 @@ st.pyplot(fig_heatmap)
 # Resumen de tiempos de resolución
 st.subheader("Resumen de Tiempos de Resolución")
 st.dataframe(df[['Estado', 'Tiempo_Resolucion']].groupby('Estado').describe())
-
