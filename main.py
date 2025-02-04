@@ -124,6 +124,8 @@ fig_heatmap, ax = plt.subplots(figsize=(12, 6))
 sns.heatmap(heatmap_data, cmap="YlGnBu", ax=ax)
 st.pyplot(fig_heatmap)
 
+#Predicción del Tiempo de Resolución
+
 # Resumen de tiempos de resolución
 st.subheader("Resumen de Tiempos de Resolución")
 st.dataframe(df[['Estado', 'Tiempo_Resolucion']].groupby('Estado').describe())
@@ -168,28 +170,29 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
+# Modelo de Random Forest para clasificación de Estado
 # Convertir columnas categóricas a variables numéricas
-df = pd.get_dummies(df, columns=['Prioridad', 'Usuario'], drop_first=True)
+df_classification = pd.get_dummies(df, columns=['Prioridad', 'Usuario'], drop_first=False)
 
-# Definir variables de entrada (X) y salida (y)
-X = df[['Prioridad_Media', 'Prioridad_Alta', 'Usuario']]
-y = df['Estado']
+# Definir las variables de entrada (X) y salida (y)
+X_classification = df_classification[['Prioridad_Media', 'Prioridad_Alta', 'Usuario_1', 'Usuario_2']]  # Asegúrate de usar las columnas correctas
+y_classification = df_classification['Estado']
 
 # Dividir en conjuntos de entrenamiento y prueba
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train_class, X_test_class, y_train_class, y_test_class = train_test_split(X_classification, y_classification, test_size=0.2, random_state=42)
 
-# Entrenar el modelo
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+# Entrenar el modelo de Random Forest
+model_class = RandomForestClassifier(n_estimators=100, random_state=42)
+model_class.fit(X_train_class, y_train_class)
 
 # Realizar predicciones
-y_pred = model.predict(X_test)
+y_pred_class = model_class.predict(X_test_class)
 
 # Evaluar el modelo
-accuracy = accuracy_score(y_test, y_pred)
-st.write(f"Precisión del modelo: {accuracy:.2f}")
+accuracy = accuracy_score(y_test_class, y_pred_class)
+st.write(f"Precisión del modelo de clasificación: {accuracy:.2f}")
 
-
+#Segmentacion de Usuarios
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
@@ -210,7 +213,7 @@ user_data['Cluster'] = kmeans.fit_predict(user_data_scaled)
 st.write("Segmentación de Usuarios por Cluster")
 st.dataframe(user_data.head())
 
-
+# Análisis de Tendencias y Estacionalidad
 from fbprophet import Prophet
 
 # Preparar los datos para Prophet
@@ -230,6 +233,7 @@ st.write(f"Predicciones de Incidentes para los próximos 30 días")
 fig = model.plot(forecast)
 st.pyplot(fig)
 
+# Detección de Anomalías (Anomalías en la resolución de incidentes)
 from sklearn.ensemble import IsolationForest
 
 # Usar solo la columna de tiempo de resolución para la detección de anomalías
