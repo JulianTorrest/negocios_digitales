@@ -373,6 +373,81 @@ y_pred = rf_model.predict(X)
 accuracy = accuracy_score(y, y_pred)
 st.write(f"Precisión del modelo de clasificación para predecir clusters: {accuracy:.2f}")
 
+## Riesgo Operacional
+# Distribución de tiempos de resolución
+fig_hist = px.histogram(df, x="Tiempo_Resolucion", nbins=50, title="Distribución de Tiempos de Resolución")
+st.plotly_chart(fig_hist)
+
+# Tasa de reapertura vs tiempo de resolución
+df_reabiertos = df[df['Estado'] == 'Abierto']
+fig_scatter = px.scatter(df_reabiertos, x='Tiempo_Resolucion', y=df_reabiertos.index, title="Relación entre Tiempo de Resolución y Reapertura")
+st.plotly_chart(fig_scatter)
+
+# Riesgo por prioridad
+fig_box = px.box(df, x="Prioridad", y="Tiempo_Resolucion", color="Prioridad", title="Tiempo de Resolución por Prioridad")
+st.plotly_chart(fig_box)
+
+# Tendencia semanal y estacionalidad
+fig_tendencia = px.line(x=dias_semana, y=tiempos_resolucion_por_dia.values, title="Tendencia de Tiempos de Resolución por Día de la Semana")
+st.plotly_chart(fig_tendencia)
+
+# Modelos de Riesgo Operacional con Machine Learning Predicción de Tiempo de Resolución (Regresión)
+# Convertir variables categóricas en numéricas
+df_ml = df.copy()
+df_ml['Dia_Semana'] = df_ml['Fecha'].dt.dayofweek
+df_ml = pd.get_dummies(df_ml, columns=['Prioridad', 'Estado'], drop_first=True)
+
+# Variables de entrada y salida
+X = df_ml[['Dia_Semana', 'Usuario'] + list(df_ml.columns[df_ml.columns.str.startswith('Prioridad_')]) + list(df_ml.columns[df_ml.columns.str.startswith('Estado_')])]
+y = df_ml['Tiempo_Resolucion']
+
+# División de datos en entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Modelo de regresión lineal
+modelo = LinearRegression()
+modelo.fit(X_train, y_train)
+y_pred = modelo.predict(X_test)
+
+# Evaluación del modelo
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+# Mostrar resultados en Streamlit
+st.subheader("Modelo de Predicción de Tiempo de Resolución")
+st.write(f"Error Absoluto Medio (MAE): {mae:.2f} horas")
+st.write(f"Coeficiente de Determinación (R²): {r2:.2f}")
+
+
+# Detección de Riesgo Operacional (Clasificación)
+# Crear variable de clasificación
+df_ml['Riesgo_Alto'] = (df_ml['Tiempo_Resolucion'] > 180).astype(int)
+
+# Variables de entrada y salida
+X = df_ml[['Dia_Semana', 'Usuario'] + list(df_ml.columns[df_ml.columns.str.startswith('Prioridad_')]) + list(df_ml.columns[df_ml.columns.str.startswith('Estado_')])]
+y = df_ml['Riesgo_Alto']
+
+# División de datos
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Modelo de clasificación
+from sklearn.ensemble import RandomForestClassifier
+
+modelo_clf = RandomForestClassifier(n_estimators=100, random_state=42)
+modelo_clf.fit(X_train, y_train)
+
+# Predicción y evaluación
+y_pred_clf = modelo_clf.predict(X_test)
+from sklearn.metrics import accuracy_score
+
+st.subheader("Clasificación de Riesgo Operacional")
+st.write(f"Precisión del Modelo: {accuracy_score(y_test, y_pred_clf) * 100:.2f}%")
+
+# Visualización de Riesgo
+fig_heatmap = px.imshow(incidentes_por_estado_y_prioridad, labels=dict(x="Prioridad", y="Estado", color="Cantidad"),
+                        title="Incidentes por Estado y Prioridad")
+st.plotly_chart(fig_heatmap)
+
 
 
 
