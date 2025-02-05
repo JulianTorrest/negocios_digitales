@@ -100,11 +100,6 @@ st.subheader("Tiempo Promedio de Resolución por Prioridad")
 fig_tiempo_prioridad = px.bar(x=promedio_resolucion_por_prioridad.index, y=promedio_resolucion_por_prioridad.values, title="Tiempo Promedio de Resolución por Prioridad")
 st.plotly_chart(fig_tiempo_prioridad)
 
-# Tendencia semanal de incidentes
-st.subheader("Tendencia Semanal de Incidentes")
-fig_semanal = px.line(x=dias_semana, y=tendencia_semanal.values, title="Incidentes por Día de la Semana")
-st.plotly_chart(fig_semanal)
-
 # Mapa de calor de incidentes
 st.subheader("Mapa de Calor de Reportes por Día y Hora")
 df['Hora'] = df['Fecha'].dt.hour
