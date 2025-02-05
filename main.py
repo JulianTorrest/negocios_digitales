@@ -155,7 +155,7 @@ mae = mean_absolute_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 
 # Mostrar métricas
-st.subheader("Evaluación del Modelo de Machine Learning")
+st.subheader("Evaluación del Modelo de Machine Learning Regresión Lineal")
 st.write(f"Error Absoluto Medio (MAE): {mae:.2f}")
 st.write(f"Coeficiente de Determinación (R²): {r2:.2f}")
 
