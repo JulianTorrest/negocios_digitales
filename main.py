@@ -200,10 +200,6 @@ param_grid = {
 }
 
 ## Riesgo Operacional
-# Distribución de tiempos de resolución
-fig_hist = px.histogram(df, x="Tiempo_Resolucion", nbins=50, title="Distribución de Tiempos de Resolución")
-st.plotly_chart(fig_hist)
-
 # Tasa de reapertura vs tiempo de resolución
 df_reabiertos = df[df['Estado'] == 'Abierto']
 fig_scatter = px.scatter(df_reabiertos, x='Tiempo_Resolucion', y=df_reabiertos.index, title="Relación entre Tiempo de Resolución y Reapertura")
