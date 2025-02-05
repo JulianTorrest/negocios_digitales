@@ -110,9 +110,14 @@ st.subheader("Tendencia Semanal de Incidentes")
 fig_semanal = px.line(x=dias_semana, y=tendencia_semanal.values, title="Incidentes por Día de la Semana")
 st.plotly_chart(fig_semanal)
 
-# Tiempo de resolución promedio por día de la semana
+# Tiempo Promedio de Resolución por Día de la Semana
 st.subheader("Tiempo Promedio de Resolución por Día de la Semana")
-fig_res_dia = px.bar(x=dias_semana, y=tiempos_resolucion_por_dia.values, title="Tiempo Promedio de Resolución por Día")
+fig_res_dia = px.bar(
+    x=dias_semana,
+    y=tiempos_resolucion_por_dia.values,
+    title="Tiempo Promedio de Resolución por Día",
+    labels={'x': 'Día de la Semana', 'y': 'Tiempo de Resolución Promedio'}
+)
 st.plotly_chart(fig_res_dia)
 
 # Mapa de calor de incidentes
